@@ -77,7 +77,7 @@
                     {% if start_num == prev_num %}
                         {% set _ = host_ranges.append(current_prefix ~ start_num) %}
                     {% else %}
-                        {% set _ = host_ranges.append(current_prefix ~ start_num ~ '-' ~ current_prefix ~ prev_num) %}
+                        {% set _ = host_ranges.append(current_prefix ~ start_num ~ '-' ~ prev_num) %}
                     {% endif %}
                     {% set current_prefix = prefix %}
                     {% set start_num = num %}
@@ -90,7 +90,7 @@
                     {% if start_num == prev_num %}
                         {% set _ = host_ranges.append(current_prefix ~ start_num) %}
                     {% else %}
-                        {% set _ = host_ranges.append(current_prefix ~ start_num ~ '-' ~ current_prefix ~ prev_num) %}
+                        {% set _ = host_ranges.append(current_prefix ~ start_num ~ '-' ~ prev_num) %}
                     {% endif %}
                 {% endif %}
             {% endfor %}
