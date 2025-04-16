@@ -57,9 +57,7 @@
             网关组: {{ gateway if gateway else '无默认网关' }} 
             ({{ servers|length }}台主机: 
             {% set host_ranges = [] %}
-            {% set current_prefix = '' %}
-            {% set start_num = 0 %}
-            {% set prev_num = 0 %}
+            {% set prefix_groups = {} %}
             {% set hosts = servers|sort(attribute='basic.hostname') %}
             
             {% for server in hosts %}
@@ -69,30 +67,39 @@
                 {% set num_match = hostname|regex_findall('[0-9]+$') %}
                 {% set num = num_match[0]|int if num_match else 0 %}
                 
-                {% if loop.first %}
-                    {% set current_prefix = prefix %}
-                    {% set start_num = num %}
-                    {% set prev_num = num %}
-                {% elif prefix != current_prefix or num != prev_num + 1 %}
-                    {% if start_num == prev_num %}
-                        {% set _ = host_ranges.append(current_prefix ~ start_num) %}
-                    {% else %}
-                        {% set _ = host_ranges.append(current_prefix ~ start_num ~ '-' ~ prev_num) %}
+                {% if prefix not in prefix_groups %}
+                    {% set prefix_groups = prefix_groups.update({prefix: []}) or prefix_groups %}
+                {% endif %}
+                {% set _ = prefix_groups[prefix].append(num) %}
+            {% endfor %}
+            
+            {% for prefix, nums in prefix_groups.items() %}
+                {% set nums = nums|sort %}
+                {% set ranges = [] %}
+                {% set start = nums[0] %}
+                {% set prev = nums[0] %}
+                
+                {% for num in nums[1:] %}
+                    {% if num > prev + 1 %}
+                        {% if start == prev %}
+                            {% set _ = ranges.append(prefix ~ start) %}
+                        {% else %}
+                            {% set _ = ranges.append(prefix ~ start ~ '-' ~ prev) %}
+                        {% endif %}
+                        {% set start = num %}
                     {% endif %}
-                    {% set current_prefix = prefix %}
-                    {% set start_num = num %}
-                    {% set prev_num = num %}
+                    {% set prev = num %}
+                {% endfor %}
+                
+                {% if start == prev %}
+                    {% set _ = ranges.append(prefix ~ start) %}
                 {% else %}
-                    {% set prev_num = num %}
+                    {% set _ = ranges.append(prefix ~ start ~ '-' ~ prev) %}
                 {% endif %}
                 
-                {% if loop.last %}
-                    {% if start_num == prev_num %}
-                        {% set _ = host_ranges.append(current_prefix ~ start_num) %}
-                    {% else %}
-                        {% set _ = host_ranges.append(current_prefix ~ start_num ~ '-' ~ prev_num) %}
-                    {% endif %}
-                {% endif %}
+                {% for range in ranges %}
+                    {% set _ = host_ranges.append(range) %}
+                {% endfor %}
             {% endfor %}
             
             {{ host_ranges|join(', ') }})
