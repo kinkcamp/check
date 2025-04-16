@@ -111,6 +111,7 @@
                     <th>SELinux</th>
                     <th>Firewalld</th>
                     <th>NFS挂载</th>
+                    <th>NTP同步</th>  <!-- 新增列 -->
                     <th>IPMI状态</th>
                     <th>详细报告</th>
                 </tr>
@@ -124,6 +125,7 @@
                     <td>{{ server.services.selinux }}</td>
                     <td>{{ server.services.firewalld }}</td>
                     <td>{{ "有" if server.nfs_mounts and server.nfs_mounts|length > 0 and server.nfs_mounts[0] != "无NFS挂载点" else "无" }}</td>
+                    <td>{{ "已配置" if server.ntp_servers and server.ntp_servers|length > 0 and server.ntp_servers[0] != "未找到NTP配置" and server.ntp_servers[0] != "未找到NTP同步源" and server.ntp_servers[0] != "未配置NTP服务器" else "未配置" }}</td>  <!-- 新增单元格 -->
                     <td>{{ "已安装" if server.ipmi.installed else "未安装" }}</td>
                     <td><a href="{{ server.basic.hostname }}_report.html" class="server-link">查看详情</a></td>
                 </tr>
