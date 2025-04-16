@@ -73,8 +73,9 @@
                 {% set _ = prefix_groups[prefix].append(num) %}
             {% endfor %}
             
-            {% for prefix, nums in prefix_groups.items() %}
-                {% set nums = nums|sort %}
+            {% set sorted_prefixes = prefix_groups.keys()|sort %}
+            {% for prefix in sorted_prefixes %}
+                {% set nums = prefix_groups[prefix]|sort %}
                 {% set ranges = [] %}
                 {% set start = nums[0] %}
                 {% set prev = nums[0] %}
