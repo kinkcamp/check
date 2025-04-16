@@ -228,8 +228,8 @@
             distribution: "{{ ansible_distribution }} {{ ansible_distribution_version }}"
             kernel: "{{ ansible_kernel }}"
             architecture: "{{ ansible_architecture }}"
-            processor_count: "{{ ansible_processor_count }}"
-            processor_cores: "{{ ansible_processor_cores }}"
+            processor_cores: "{{ ansible_processor_count }}"  # 修改：处理器数量
+            processor_count: "{{ ansible_processor_cores }}"  # 修改：核心数
             memory_mb: "{{ ansible_memtotal_mb }}"
             uptime_seconds: "{{ ansible_uptime_seconds }}"
           network:
