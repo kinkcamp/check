@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>服务器信息汇总报告</title>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1, h2, h3 { color: #333; }
+        table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .server-link { color: blue; text-decoration: underline; }
+        .service-active { color: green; font-weight: bold; }
+        .service-inactive { color: red; }
+        .group-header { background-color: #e0e0e0; font-weight: bold; cursor: pointer; }
+        .route-info { background-color: #f0f0f0; font-style: italic; }
+        .route-table { font-family: monospace; }
+        .gateway-group { margin-bottom: 30px; }
+        .host-group { display: none; }
+        .toggle-icon { margin-right: 10px; }
+    </style>
+    <script>
+        function toggleGroup(gatewayId) {
+            var group = document.getElementById('hosts-' + gatewayId);
+            var icon = document.getElementById('icon-' + gatewayId);
+            if (group.style.display === 'none' || group.style.display === '') {
+                group.style.display = 'block';
+                icon.innerHTML = '&#9660;'; // 向下箭头
+            } else {
+                group.style.display = 'none';
+                icon.innerHTML = '&#9658;'; // 向右箭头
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>服务器信息汇总报告</h1>
+    <p>生成时间: {{ ansible_date_time.iso8601 }}</p>
+    <p>服务器总数: {{ all_servers_info | length }}</p>
+
+    <h2>服务器列表（按网关分组）</h2>
+    
+    {% set gateway_groups = {} %}
+    {% for server in all_servers_info %}
+        {% set gateway = server.network.default_gateway|join('') %}
+        {% if gateway not in gateway_groups %}
+            {% set gateway_groups = gateway_groups.update({gateway: []}) or gateway_groups %}
+        {% endif %}
+        {% set _ = gateway_groups[gateway].append(server) %}
+    {% endfor %}
+    
+    {% for gateway, servers in gateway_groups.items() %}
+    <div class="gateway-group">
+        <h3 class="group-header" onclick="toggleGroup('{{ loop.index }}')">
+            <span id="icon-{{ loop.index }}" class="toggle-icon">&#9658;</span>
+            网关组: {{ gateway if gateway else '无默认网关' }} 
+            ({{ servers|length }}台主机: 
+            {% set host_ranges = [] %}
+            {% set current_prefix = '' %}
+            {% set start_num = 0 %}
+            {% set prev_num = 0 %}
+            {% set hosts = servers|sort(attribute='basic.hostname') %}
+            
+            {% for server in hosts %}
+                {% set hostname = server.basic.hostname %}
+                {% set prefix = hostname|regex_replace('[0-9]+$', '') %}
+                {% set num = hostname|regex_replace('^[^0-9]*', '')|int %}
+                
+                {% if loop.first %}
+                    {% set current_prefix = prefix %}
+                    {% set start_num = num %}
+                    {% set prev_num = num %}
+                {% elif prefix != current_prefix or num != prev_num + 1 %}
+                    {% if start_num == prev_num %}
+                        {% set _ = host_ranges.append(current_prefix ~ start_num) %}
+                    {% else %}
+                        {% set _ = host_ranges.append(current_prefix ~ start_num ~ '-' ~ current_prefix ~ prev_num) %}
+                    {% endif %}
+                    {% set current_prefix = prefix %}
+                    {% set start_num = num %}
+                    {% set prev_num = num %}
+                {% else %}
+                    {% set prev_num = num %}
+                {% endif %}
+                
+                {% if loop.last %}
+                    {% if start_num == prev_num %}
+                        {% set _ = host_ranges.append(current_prefix ~ start_num) %}
+                    {% else %}
+                        {% set _ = host_ranges.append(current_prefix ~ start_num ~ '-' ~ current_prefix ~ prev_num) %}
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+            
+            {{ host_ranges|join(', ') }})
+        </h3>
+        <div id="hosts-{{ loop.index }}" class="host-group">
+            <table>
+                <tr>
+                    <th>主机名</th>
+                    <th>操作系统</th>
+                    <th>内核版本</th>
+                    <th>CPU核心数</th>
+                    <th>内存(MB)</th>
+                    <th>SELinux</th>
+                    <th>Firewalld</th>
+                    <th>NFS挂载</th>
+                    <th>IPMI状态</th>
+                    <th>详细报告</th>
+                </tr>
+                {% for server in servers %}
+                <tr>
+                    <td>{{ server.basic.hostname }}</td>
+                    <td>{{ server.basic.distribution }}</td>
+                    <td>{{ server.basic.kernel }}</td>
+                    <td>{{ server.basic.processor_cores }}</td>
+                    <td>{{ server.basic.memory_mb }}</td>
+                    <td>{{ server.services.selinux }}</td>
+                    <td>{{ server.services.firewalld }}</td>
+                    <td>{{ "有" if server.nfs_mounts and server.nfs_mounts|length > 0 and server.nfs_mounts[0] != "无NFS挂载点" else "无" }}</td>
+                    <td>{{ "已安装" if server.ipmi.installed else "未安装" }}</td>
+                    <td><a href="{{ server.basic.hostname }}_report.html" class="server-link">查看详情</a></td>
+                </tr>
+                {% endfor %}
+                <tr class="route-info">
+                    <td colspan="10">
+                        <strong>组路由信息:</strong><br>
+                        <div class="route-table">
+                        {% for server in servers %}
+                            {% if loop.first %}
+                                {% if server.routes|length > 0 %}
+                                    {{ server.routes|join('<br>') }}
+                                {% else %}
+                                    无路由信息
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    {% endfor %}
+</body>
+</html>

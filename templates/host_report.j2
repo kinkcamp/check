@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ item.basic.hostname }} - 服务器详细信息</title>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1, h2, h3 { color: #333; }
+        table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        pre { white-space: pre-wrap; word-wrap: break-word; background-color: #f5f5f5; padding: 10px; border-radius: 5px; }
+        .section { margin-bottom: 30px; }
+        .service-active { color: green; font-weight: bold; }
+        .service-inactive { color: red; }
+    </style>
+</head>
+<body>
+    <h1>{{ item.basic.hostname }} - 服务器详细信息</h1>
+    <p>收集时间: {{ item.date_collected }}</p>
+    <p><a href="summary_report.html">返回汇总报告</a></p>
+
+    <div class="section">
+        <h2>基本信息</h2>
+        <table>
+            <tr><th>主机名</th><td>{{ item.basic.hostname }}</td></tr>
+            <tr><th>FQDN</th><td>{{ item.basic.fqdn }}</td></tr>
+            <tr><th>操作系统</th><td>{{ item.basic.distribution }}</td></tr>
+            <tr><th>内核版本</th><td>{{ item.basic.kernel }}</td></tr>
+            <tr><th>架构</th><td>{{ item.basic.architecture }}</td></tr>
+            <tr><th>处理器数量</th><td>{{ item.basic.processor_count }}</td></tr>
+            <tr><th>处理器核心数</th><td>{{ item.basic.processor_cores }}</td></tr>
+            <tr><th>内存(MB)</th><td>{{ item.basic.memory_mb }}</td></tr>
+            <tr><th>运行时间(秒)</th><td>{{ item.basic.uptime_seconds }}</td></tr>
+            <tr><th>系统负载</th><td>{{ item.system_load }}</td></tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>服务状态</h2>
+        <table>
+            <tr><th>SELinux</th><td>{{ item.services.selinux }}</td></tr>
+            <tr><th>Firewalld</th><td>{{ item.services.firewalld }}</td></tr>
+            <tr><th>NIS</th><td>{{ item.services.nis }}</td></tr>
+            <tr><th>Chronyd</th><td>{{ item.services.chronyd }}</td></tr>
+            <tr><th>用户数量</th><td>{{ item.users_count }}</td></tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>网络信息</h2>
+        <h3>IP配置</h3>
+        <pre>{{ item.network.ip_info | join('\n') }}</pre>
+        
+        <h3>默认网关</h3>
+        <pre>{{ item.network.default_gateway | join('\n') }}</pre>
+        
+        <h3>路由信息</h3>
+        <pre>{{ item.routes | join('\n') }}</pre>
+    </div>
+
+    <div class="section">
+        <h2>存储信息</h2>
+        <h3>磁盘使用情况</h3>
+        <pre>{{ item.disk_usage | join('\n') }}</pre>
+        
+        <h3>NFS挂载点</h3>
+        <pre>{{ item.nfs_mounts | join('\n') }}</pre>
+    </div>
+
+    <div class="section">
+        <h2>内存使用情况</h2>
+        <pre>{{ item.memory_usage | join('\n') }}</pre>
+    </div>
+
+    <div class="section">
+        <h2>软件包信息</h2>
+        <table>
+            <tr><th>已安装包数量</th><td>{{ item.package_count }}</td></tr>
+        </table>
+        
+        {% if item.repo_info and item.repo_info | length > 0 %}
+        <h3>配置的YUM源</h3>
+        <pre>{{ item.repo_info | join('\n') }}</pre>
+        {% endif %}
+        
+        {% if item.group_info and item.group_info | length > 0 %}
+        <h3>已安装组信息</h3>
+        <pre>{{ item.group_info | join('\n') }}</pre>
+        {% endif %}
+    </div>
+
+    <div class="section">
+        <h2>IPMI信息</h2>
+        <table>
+            <tr><th>IPMI状态</th><td>{{ "已安装" if item.ipmi.installed else "未安装" }}</td></tr>
+        </table>
+        
+        {% if item.ipmi.installed %}
+        <h3>IPMI基本信息</h3>
+        <pre>{{ item.ipmi.info | join('\n') }}</pre>
+        
+        <h3>IPMI网络配置</h3>
+        <pre>{{ item.ipmi.lan | join('\n') }}</pre>
+        
+        <h3>IPMI传感器信息</h3>
+        <pre>{{ item.ipmi.sensors | join('\n') }}</pre>
+        {% endif %}
+    </div>
+</body>
+</html>

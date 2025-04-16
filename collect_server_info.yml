@@ -1,0 +1,332 @@
+---
+- name: 收集服务器详细信息
+  hosts: all
+  gather_facts: yes
+  become: yes
+  tasks:
+    - name: 创建输出目录
+      file:
+        path: "{{ playbook_dir }}/server_reports"
+        state: directory
+        mode: '0755'
+      delegate_to: localhost
+      run_once: true
+      become: no
+    
+    # 所有信息收集任务保持在节点上执行
+    - name: 收集主机基本信息
+      set_fact:
+        server_info:
+          hostname: "{{ ansible_hostname }}"
+          fqdn: "{{ ansible_fqdn }}"
+          distribution: "{{ ansible_distribution }} {{ ansible_distribution_version }}"
+          kernel: "{{ ansible_kernel }}"
+          architecture: "{{ ansible_architecture }}"
+          processor_count: "{{ ansible_processor_count }}"
+          processor_cores: "{{ ansible_processor_cores }}"
+          memory_mb: "{{ ansible_memtotal_mb }}"
+          uptime_seconds: "{{ ansible_uptime_seconds }}"
+
+    - name: 收集网络信息
+      shell: ip addr show
+      register: ip_addr_output
+      changed_when: false
+
+    # 修改网关和路由信息收集方式，兼容不同系统
+    - name: 检查route命令是否可用
+      command: which route
+      register: route_check
+      changed_when: false
+      ignore_errors: yes
+
+    - name: 收集默认网关信息 (使用route命令)
+      shell: route -n | grep 'UG' | awk '{printf "%-20s %-20s %-20s %-20s\n", $1, $2, $3, $NF}'
+      register: default_gateway_route
+      changed_when: false
+      when: route_check.rc == 0
+      ignore_errors: yes
+
+    - name: 收集默认网关信息 (使用ip命令)
+      shell: ip route | grep default | awk '{printf "default via %-15s dev %-10s proto %-10s metric %-5s\n", $3, $5, $7, $9}'
+      register: default_gateway_ip
+      changed_when: false
+      when: route_check.rc != 0
+      ignore_errors: yes
+
+    - name: 设置默认网关变量
+      set_fact:
+        default_gateway: "{{ default_gateway_route.stdout_lines | default([]) if route_check.rc == 0 else default_gateway_ip.stdout_lines | default([]) }}"
+
+    - name: 收集路由信息 (使用route命令)
+      shell: route -n
+      register: route_info_route
+      changed_when: false
+      when: route_check.rc == 0
+      ignore_errors: yes
+
+    - name: 收集路由信息 (使用ip命令)
+      shell: ip route
+      register: route_info_ip
+      changed_when: false
+      when: route_check.rc != 0
+      ignore_errors: yes
+
+    - name: 设置路由信息变量
+      set_fact:
+        route_info: "{{ route_info_route.stdout_lines | default([]) if route_check.rc == 0 else route_info_ip.stdout_lines | default([]) }}"
+
+    # 删除原有服务信息收集，改为收集特定服务状态
+    - name: 收集SELinux状态
+      shell: |
+        if [ -x "$(command -v getenforce)" ]; then
+          getenforce
+        else
+          echo "未安装SELinux"
+        fi
+      register: selinux_status
+      changed_when: false
+      ignore_errors: yes
+
+    - name: 收集firewalld状态
+      shell: |
+        if systemctl is-active firewalld >/dev/null 2>&1; then
+          echo "active"
+        else
+          echo "inactive"
+        fi
+      register: firewalld_status
+      changed_when: false
+      ignore_errors: yes
+
+    - name: 收集NIS状态
+      shell: |
+        if systemctl is-active ypbind >/dev/null 2>&1; then
+          echo "active"
+        else
+          echo "inactive"
+        fi
+      register: nis_status
+      changed_when: false
+      ignore_errors: yes
+
+    - name: 收集chronyd状态
+      shell: |
+        if systemctl is-active chronyd >/dev/null 2>&1; then
+          echo "active"
+        else
+          echo "inactive"
+        fi
+      register: chronyd_status
+      changed_when: false
+      ignore_errors: yes
+
+    # 增加NFS挂载点信息收集
+    - name: 收集NFS挂载点信息
+      shell: mount | grep nfs || echo "无NFS挂载点"
+      register: nfs_mounts
+      changed_when: false
+      ignore_errors: yes
+
+    # 收集IPMI信息
+    - name: 检查ipmitool是否安装
+      shell: which ipmitool 2>/dev/null || echo "未安装ipmitool"
+      register: ipmitool_check
+      changed_when: false
+      ignore_errors: yes
+
+    - name: 收集IPMI基本信息
+      shell: ipmitool bmc info
+      register: ipmi_info
+      changed_when: false
+      when: ipmitool_check.stdout.find('未安装') == -1
+      ignore_errors: yes
+
+    - name: 收集IPMI网络配置信息
+      shell: ipmitool lan print
+      register: ipmi_lan
+      changed_when: false
+      when: ipmitool_check.stdout.find('未安装') == -1
+      ignore_errors: yes
+
+    - name: 收集IPMI传感器信息
+      shell: ipmitool sensor list
+      register: ipmi_sensors
+      changed_when: false
+      when: ipmitool_check.stdout.find('未安装') == -1
+      ignore_errors: yes
+
+    - name: 统计已安装包数量
+      shell: rpm -qa | wc -l
+      register: rpm_count
+      changed_when: false
+      ignore_errors: yes
+
+    # 删除Debian系列相关的任务
+
+    - name: 设置包数量变量
+      set_fact:
+        package_count: "{{ rpm_count.stdout | default('0') }}"
+
+    - name: 收集已安装组信息
+      shell: yum grouplist 2>/dev/null || echo "无法获取组信息"
+      register: group_info_redhat
+      changed_when: false
+      ignore_errors: yes
+
+    - name: 设置组信息变量
+      set_fact:
+        group_info: "{{ group_info_redhat.stdout_lines | default([]) }}"
+
+    - name: 收集磁盘使用情况
+      shell: df -h
+      register: disk_usage
+      changed_when: false
+
+    - name: 收集系统服务状态
+      shell: ps -ef | grep -v grep | grep -E '(systemd|init|upstart|service|daemon)' | wc -l
+      register: services_count
+      changed_when: false
+
+    - name: 收集运行中的服务列表 (systemd)
+      shell: systemctl list-units --type=service --state=running | head -20
+      register: running_services
+      changed_when: false
+      ignore_errors: yes
+
+    - name: 收集用户信息
+      shell: cat /etc/passwd | grep -v nologin | grep -v false | wc -l
+      register: users_count
+      changed_when: false
+
+    - name: 收集系统负载信息
+      shell: uptime
+      register: system_load
+      changed_when: false
+
+    - name: 收集内存使用情况
+      shell: free -m
+      register: memory_usage
+      changed_when: false
+
+    # 收集YUM源信息 - 移动到这里
+    - name: 收集YUM源信息
+      shell: yum repolist 2>/dev/null || echo "无法获取YUM源信息"
+      register: repo_info_output
+      changed_when: false
+      ignore_errors: yes
+
+    - name: 设置YUM源信息变量
+      set_fact:
+        repo_info: "{{ repo_info_output.stdout_lines | default([]) }}"
+
+    - name: 合并所有信息
+      set_fact:
+        complete_info:
+          basic:
+            hostname: "{{ ansible_hostname }}"
+            fqdn: "{{ ansible_fqdn }}"
+            distribution: "{{ ansible_distribution }} {{ ansible_distribution_version }}"
+            kernel: "{{ ansible_kernel }}"
+            architecture: "{{ ansible_architecture }}"
+            processor_count: "{{ ansible_processor_count }}"
+            processor_cores: "{{ ansible_processor_cores }}"
+            memory_mb: "{{ ansible_memtotal_mb }}"
+            uptime_seconds: "{{ ansible_uptime_seconds }}"
+          network:
+            ip_info: "{{ ip_addr_output.stdout_lines }}"
+            default_gateway: "{{ default_gateway }}"
+          routes: "{{ route_info }}"
+          package_count: "{{ package_count }}"
+          repo_info: "{{ repo_info }}"
+          group_info: "{{ group_info }}"
+          disk_usage: "{{ disk_usage.stdout_lines }}"
+          services:
+            selinux: "{{ selinux_status.stdout | trim }}"
+            firewalld: "{{ firewalld_status.stdout | trim }}"
+            nis: "{{ nis_status.stdout | trim }}"
+            chronyd: "{{ chronyd_status.stdout | trim }}"
+          nfs_mounts: "{{ nfs_mounts.stdout_lines | default([]) }}"
+          ipmi:
+            installed: "{{ ipmitool_check.stdout.find('未安装') == -1 }}"
+            info: "{{ ipmi_info.stdout_lines | default([]) if ipmitool_check.stdout.find('未安装') == -1 else ['未安装ipmitool'] }}"
+            lan: "{{ ipmi_lan.stdout_lines | default([]) if ipmitool_check.stdout.find('未安装') == -1 else ['未安装ipmitool'] }}"
+            sensors: "{{ ipmi_sensors.stdout_lines | default([]) if ipmitool_check.stdout.find('未安装') == -1 else ['未安装ipmitool'] }}"
+          users_count: "{{ users_count.stdout | trim }}"
+          system_load: "{{ system_load.stdout | trim }}"
+          memory_usage: "{{ memory_usage.stdout_lines }}"
+          date_collected: "{{ ansible_date_time.iso8601 }}"
+          services_count: "{{ services_count.stdout | trim }}"
+
+    # 使用fetch模块从节点获取信息到控制主机
+    - name: 在节点上保存临时信息文件
+      copy:
+        content: "{{ complete_info | to_nice_json }}"
+        dest: "/tmp/{{ ansible_hostname }}_info.json"
+      
+    - name: 从节点获取信息文件
+      fetch:
+        src: "/tmp/{{ ansible_hostname }}_info.json"
+        dest: "{{ playbook_dir }}/server_reports/{{ ansible_hostname }}_info.json"
+        flat: yes
+
+    - name: 删除节点上的临时文件
+      file:
+        path: "/tmp/{{ ansible_hostname }}_info.json"
+        state: absent
+
+# 第二个play只在localhost上运行，用于生成报告
+- name: 生成汇总报告
+  hosts: localhost
+  connection: local
+  gather_facts: yes  # 修改为yes，以获取ansible_date_time变量
+  tasks:
+    - name: 查找所有服务器报告
+      find:
+        paths: "{{ playbook_dir }}/server_reports"
+        patterns: "*_info.json"
+      register: report_files
+
+    - name: 显示找到的报告文件
+      debug:
+        msg: "找到 {{ report_files.files | length }} 个报告文件"
+
+    - name: 读取所有服务器报告
+      slurp:
+        src: "{{ item.path }}"
+      register: reports_content
+      with_items: "{{ report_files.files }}"
+      when: report_files.files | length > 0
+
+    - name: 解码报告内容
+      set_fact:
+        all_servers_info: "{{ all_servers_info | default([]) + [item.content | b64decode | from_json] }}"
+      with_items: "{{ reports_content.results }}"
+      when: reports_content.results is defined
+
+    - name: 检查是否有服务器信息
+      debug:
+        msg: "收集到 {{ all_servers_info | default([]) | length }} 台服务器的信息"
+
+    - name: 为每台服务器生成单独的HTML报告
+      template:
+        src: "{{ playbook_dir }}/templates/host_report.j2"
+        dest: "{{ playbook_dir }}/server_reports/{{ item.basic.hostname }}_report.html"
+      loop: "{{ all_servers_info | default([]) }}"
+      when: all_servers_info is defined and all_servers_info | length > 0
+
+    - name: 生成汇总报告
+      template:
+        src: "{{ playbook_dir }}/templates/summary_report.j2"
+        dest: "{{ playbook_dir }}/server_reports/summary_report.html"
+      when: all_servers_info is defined and all_servers_info | length > 0
+
+    # 删除这两个任务，因为已经移到第一个 play 中了
+    # - name: 收集YUM源信息
+    #   shell: yum repolist 2>/dev/null || echo "无法获取YUM源信息"
+    #   register: repo_info_output
+    #   changed_when: false
+    #   ignore_errors: yes
+
+    # - name: 设置YUM源信息变量
+    #   set_fact:
+    #     repo_info: "{{ repo_info_output.stdout_lines | default([]) }}"
