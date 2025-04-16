@@ -64,8 +64,10 @@
             
             {% for server in hosts %}
                 {% set hostname = server.basic.hostname %}
-                {% set prefix = hostname|regex_replace('[0-9]+$', '') %}
-                {% set num = hostname|regex_replace('^[^0-9]*', '')|int %}
+                {% set prefix_match = hostname|regex_findall('^[a-zA-Z]+') %}
+                {% set prefix = prefix_match[0] if prefix_match else '' %}
+                {% set num_match = hostname|regex_findall('[0-9]+$') %}
+                {% set num = num_match[0]|int if num_match else 0 %}
                 
                 {% if loop.first %}
                     {% set current_prefix = prefix %}
@@ -75,7 +77,7 @@
                     {% if start_num == prev_num %}
                         {% set _ = host_ranges.append(current_prefix ~ start_num) %}
                     {% else %}
-                        {% set _ = host_ranges.append(current_prefix ~ start_num ~ '-' ~ current_prefix ~ prev_num) %}
+                        {% set _ = host_ranges.append(current_prefix ~ start_num ~ '-' ~ prev_num) %}
                     {% endif %}
                     {% set current_prefix = prefix %}
                     {% set start_num = num %}
@@ -88,7 +90,7 @@
                     {% if start_num == prev_num %}
                         {% set _ = host_ranges.append(current_prefix ~ start_num) %}
                     {% else %}
-                        {% set _ = host_ranges.append(current_prefix ~ start_num ~ '-' ~ current_prefix ~ prev_num) %}
+                        {% set _ = host_ranges.append(current_prefix ~ start_num ~ '-' ~ prev_num) %}
                     {% endif %}
                 {% endif %}
             {% endfor %}
