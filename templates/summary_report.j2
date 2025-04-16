@@ -73,7 +73,12 @@
                 {% set _ = prefix_groups[prefix].append(num) %}
             {% endfor %}
             
-            {% set sorted_prefixes = prefix_groups.keys()|sort %}
+            {% set all_prefixes = [] %}
+            {% for prefix in prefix_groups.keys() %}
+                {% set _ = all_prefixes.append(prefix) %}
+            {% endfor %}
+            {% set sorted_prefixes = all_prefixes|sort %}
+            
             {% for prefix in sorted_prefixes %}
                 {% set nums = prefix_groups[prefix]|sort %}
                 {% set ranges = [] %}
@@ -83,9 +88,9 @@
                 {% for num in nums[1:] %}
                     {% if num > prev + 1 %}
                         {% if start == prev %}
-                            {% set _ = ranges.append(prefix ~ start) %}
+                            {% set _ = host_ranges.append(prefix ~ start) %}
                         {% else %}
-                            {% set _ = ranges.append(prefix ~ start ~ '-' ~ prev) %}
+                            {% set _ = host_ranges.append(prefix ~ start ~ '-' ~ prev) %}
                         {% endif %}
                         {% set start = num %}
                     {% endif %}
@@ -93,14 +98,10 @@
                 {% endfor %}
                 
                 {% if start == prev %}
-                    {% set _ = ranges.append(prefix ~ start) %}
+                    {% set _ = host_ranges.append(prefix ~ start) %}
                 {% else %}
-                    {% set _ = ranges.append(prefix ~ start ~ '-' ~ prev) %}
+                    {% set _ = host_ranges.append(prefix ~ start ~ '-' ~ prev) %}
                 {% endif %}
-                
-                {% for range in ranges %}
-                    {% set _ = host_ranges.append(range) %}
-                {% endfor %}
             {% endfor %}
             
             {{ host_ranges|join(', ') }})
