@@ -1,0 +1,122 @@
+{
+    "basic": {
+        "architecture": "x86_64",
+        "distribution": "RedHat 8.10",
+        "fqdn": "n2.io",
+        "hostname": "n2",
+        "kernel": "4.18.0-553.el8_10.x86_64",
+        "memory_mb": 767,
+        "processor_cores": 1,
+        "processor_count": 12,
+        "uptime_seconds": 91587
+    },
+    "date_collected": "2025-04-16T02:44:48Z",
+    "disk_usage": [
+        "Filesystem             Size  Used Avail Use% Mounted on",
+        "devtmpfs               365M     0  365M   0% /dev",
+        "tmpfs                  384M     0  384M   0% /dev/shm",
+        "tmpfs                  384M  5.5M  379M   2% /run",
+        "tmpfs                  384M     0  384M   0% /sys/fs/cgroup",
+        "/dev/mapper/rhel-root   65G  3.5G   61G   6% /",
+        "/dev/vda1             1014M  229M  786M  23% /boot",
+        "/dev/mapper/rhel-home   32G  257M   32G   1% /home",
+        "10.16.0.1:/data        938G   74G  817G   9% /data",
+        "tmpfs                   77M     0   77M   0% /run/user/0"
+    ],
+    "group_info": [
+        "Updating Subscription Management repositories.",
+        "Unable to read consumer identity",
+        "",
+        "This system is not registered with an entitlement server. You can use subscription-manager to register.",
+        "",
+        "Last metadata expiration check: 1:03:05 ago on Wed 16 Apr 2025 09:41:51 AM CST.",
+        "Available Environment Groups:",
+        "   Server with GUI",
+        "   Server",
+        "   Workstation",
+        "   Custom Operating System",
+        "   Virtualization Host",
+        "Installed Environment Groups:",
+        "   Minimal Install",
+        "Installed Groups:",
+        "   Legacy UNIX Compatibility",
+        "   Container Management",
+        "   Development Tools",
+        "Available Groups:",
+        "   .NET Core Development",
+        "   Graphical Administration Tools",
+        "   Headless Management",
+        "   Network Servers",
+        "   RPM Development Tools",
+        "   Scientific Support",
+        "   Security Tools",
+        "   Smart Card Support",
+        "   System Tools"
+    ],
+    "ipmi": {
+        "info": [
+            "\u672a\u5b89\u88c5ipmitool"
+        ],
+        "installed": false,
+        "lan": [
+            "\u672a\u5b89\u88c5ipmitool"
+        ],
+        "sensors": [
+            "\u672a\u5b89\u88c5ipmitool"
+        ]
+    },
+    "memory_usage": [
+        "              total        used        free      shared  buff/cache   available",
+        "Mem:            767         208         159           9         399         424",
+        "Swap:          3183           0        3183"
+    ],
+    "network": {
+        "default_gateway": [
+            "0.0.0.0              10.16.0.1            0.0.0.0              enp1s0              "
+        ],
+        "ip_info": [
+            "1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000",
+            "    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00",
+            "    inet 127.0.0.1/8 scope host lo",
+            "       valid_lft forever preferred_lft forever",
+            "    inet6 ::1/128 scope host ",
+            "       valid_lft forever preferred_lft forever",
+            "2: enp1s0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000",
+            "    link/ether 52:54:00:0b:34:31 brd ff:ff:ff:ff:ff:ff",
+            "    inet 10.16.0.37/26 brd 10.16.0.63 scope global noprefixroute enp1s0",
+            "       valid_lft forever preferred_lft forever",
+            "    inet6 fe80::5054:ff:fe0b:3431/64 scope link noprefixroute ",
+            "       valid_lft forever preferred_lft forever"
+        ]
+    },
+    "nfs_mounts": [
+        "sunrpc on /var/lib/nfs/rpc_pipefs type rpc_pipefs (rw,relatime)",
+        "10.16.0.1:/data on /data type nfs4 (rw,relatime,vers=4.2,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=10.16.0.37,local_lock=none,addr=10.16.0.1)"
+    ],
+    "package_count": "687",
+    "repo_info": [
+        "Updating Subscription Management repositories.",
+        "Unable to read consumer identity",
+        "",
+        "This system is not registered with an entitlement server. You can use subscription-manager to register.",
+        "",
+        "repo id                                 repo name",
+        "AppStream                               AppStream",
+        "BaseOS                                  BaseOS"
+    ],
+    "routes": [
+        "Kernel IP routing table",
+        "Destination     Gateway         Genmask         Flags Metric Ref    Use Iface",
+        "0.0.0.0         10.16.0.1       0.0.0.0         UG    100    0        0 enp1s0",
+        "10.16.0.0       0.0.0.0         255.255.255.192 U     100    0        0 enp1s0"
+    ],
+    "services": {
+        "chronyd": "active",
+        "firewalld": "inactive",
+        "nis": "inactive",
+        "selinux": "Enforcing"
+    },
+    "services_count": "7",
+    "system_load": "10:44:59 up 1 day,  1:26,  1 user,  load average: 0.22, 0.06, 0.02",
+    "users_count": "6"
+}

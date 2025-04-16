@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>n1 - 服务器详细信息</title>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1, h2, h3 { color: #333; }
+        table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        pre { white-space: pre-wrap; word-wrap: break-word; background-color: #f5f5f5; padding: 10px; border-radius: 5px; }
+        .section { margin-bottom: 30px; }
+        .service-active { color: green; font-weight: bold; }
+        .service-inactive { color: red; }
+    </style>
+</head>
+<body>
+    <h1>n1 - 服务器详细信息</h1>
+    <p>收集时间: 2025-04-16T02:44:47Z</p>
+    <p><a href="summary_report.html">返回汇总报告</a></p>
+
+    <div class="section">
+        <h2>基本信息</h2>
+        <table>
+            <tr><th>主机名</th><td>n1</td></tr>
+            <tr><th>FQDN</th><td>n1.io</td></tr>
+            <tr><th>操作系统</th><td>RedHat 8.10</td></tr>
+            <tr><th>内核版本</th><td>4.18.0-553.el8_10.x86_64</td></tr>
+            <tr><th>架构</th><td>x86_64</td></tr>
+            <tr><th>处理器数量</th><td>12</td></tr>
+            <tr><th>处理器核心数</th><td>1</td></tr>
+            <tr><th>内存(MB)</th><td>767</td></tr>
+            <tr><th>运行时间(秒)</th><td>91588</td></tr>
+            <tr><th>系统负载</th><td>10:44:59 up 1 day,  1:26,  1 user,  load average: 0.15, 0.04, 0.01</td></tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>服务状态</h2>
+        <table>
+            <tr><th>SELinux</th><td>Enforcing</td></tr>
+            <tr><th>Firewalld</th><td>inactive</td></tr>
+            <tr><th>NIS</th><td>inactive</td></tr>
+            <tr><th>Chronyd</th><td>active</td></tr>
+            <tr><th>用户数量</th><td>6</td></tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>网络信息</h2>
+        <h3>IP配置</h3>
+        <pre>1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host 
+       valid_lft forever preferred_lft forever
+2: enp1s0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    link/ether 52:54:00:d5:f8:c5 brd ff:ff:ff:ff:ff:ff
+    inet 10.16.0.36/26 brd 10.16.0.63 scope global noprefixroute enp1s0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::5054:ff:fed5:f8c5/64 scope link noprefixroute 
+       valid_lft forever preferred_lft forever</pre>
+        
+        <h3>默认网关</h3>
+        <pre>0.0.0.0              10.16.0.1            0.0.0.0              enp1s0              </pre>
+        
+        <h3>路由信息</h3>
+        <pre>Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         10.16.0.1       0.0.0.0         UG    100    0        0 enp1s0
+10.16.0.0       0.0.0.0         255.255.255.192 U     100    0        0 enp1s0</pre>
+    </div>
+
+    <div class="section">
+        <h2>存储信息</h2>
+        <h3>磁盘使用情况</h3>
+        <pre>Filesystem             Size  Used Avail Use% Mounted on
+devtmpfs               365M     0  365M   0% /dev
+tmpfs                  384M     0  384M   0% /dev/shm
+tmpfs                  384M  5.5M  379M   2% /run
+tmpfs                  384M     0  384M   0% /sys/fs/cgroup
+/dev/mapper/rhel-root   65G  3.5G   61G   6% /
+/dev/vda1             1014M  229M  786M  23% /boot
+/dev/mapper/rhel-home   32G  257M   32G   1% /home
+10.16.0.1:/data        938G   74G  817G   9% /data
+tmpfs                   77M     0   77M   0% /run/user/0</pre>
+        
+        <h3>NFS挂载点</h3>
+        <pre>sunrpc on /var/lib/nfs/rpc_pipefs type rpc_pipefs (rw,relatime)
+10.16.0.1:/data on /data type nfs4 (rw,relatime,vers=4.2,rsize=1048576,wsize=1048576,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,clientaddr=10.16.0.36,local_lock=none,addr=10.16.0.1)</pre>
+    </div>
+
+    <div class="section">
+        <h2>内存使用情况</h2>
+        <pre>              total        used        free      shared  buff/cache   available
+Mem:            767         210         158           9         399         423
+Swap:          3183           0        3183</pre>
+    </div>
+
+    <div class="section">
+        <h2>软件包信息</h2>
+        <table>
+            <tr><th>已安装包数量</th><td>687</td></tr>
+        </table>
+        
+                <h3>配置的YUM源</h3>
+        <pre>Updating Subscription Management repositories.
+Unable to read consumer identity
+
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+
+repo id                                 repo name
+AppStream                               AppStream
+BaseOS                                  BaseOS</pre>
+                
+                <h3>已安装组信息</h3>
+        <pre>Updating Subscription Management repositories.
+Unable to read consumer identity
+
+This system is not registered with an entitlement server. You can use subscription-manager to register.
+
+Last metadata expiration check: 2:52:15 ago on Wed 16 Apr 2025 07:52:40 AM CST.
+Available Environment Groups:
+   Server with GUI
+   Server
+   Workstation
+   Custom Operating System
+   Virtualization Host
+Installed Environment Groups:
+   Minimal Install
+Installed Groups:
+   Legacy UNIX Compatibility
+   Container Management
+   Development Tools
+Available Groups:
+   .NET Core Development
+   Graphical Administration Tools
+   Headless Management
+   Network Servers
+   RPM Development Tools
+   Scientific Support
+   Security Tools
+   Smart Card Support
+   System Tools</pre>
+            </div>
+
+    <div class="section">
+        <h2>IPMI信息</h2>
+        <table>
+            <tr><th>IPMI状态</th><td>未安装</td></tr>
+        </table>
+        
+            </div>
+</body>
+</html>
