@@ -73,34 +73,28 @@
                 {% set _ = prefix_groups[prefix].append(num) %}
             {% endfor %}
             
-            {% set all_prefixes = [] %}
-            {% for prefix in prefix_groups.keys() %}
-                {% set _ = all_prefixes.append(prefix) %}
-            {% endfor %}
-            {% set sorted_prefixes = all_prefixes|sort %}
-            
-            {% for prefix in sorted_prefixes %}
+            {% for prefix in prefix_groups|sort %}
                 {% set nums = prefix_groups[prefix]|sort %}
-                {% set ranges = [] %}
-                {% set start = nums[0] %}
-                {% set prev = nums[0] %}
+                {% set start_idx = 0 %}
+                {% set current_range = [] %}
                 
-                {% for num in nums[1:] %}
-                    {% if num > prev + 1 %}
-                        {% if start == prev %}
-                            {% set _ = host_ranges.append(prefix ~ start) %}
+                {% for i in range(1, nums|length) %}
+                    {% if nums[i] != nums[i-1] + 1 %}
+                        {% if start_idx == i - 1 %}
+                            {% set _ = host_ranges.append(prefix ~ nums[start_idx]) %}
                         {% else %}
-                            {% set _ = host_ranges.append(prefix ~ start ~ '-' ~ prev) %}
+                            {% set _ = host_ranges.append(prefix ~ nums[start_idx] ~ '-' ~ nums[i-1]) %}
                         {% endif %}
-                        {% set start = num %}
+                        {% set start_idx = i %}
                     {% endif %}
-                    {% set prev = num %}
                 {% endfor %}
                 
-                {% if start == prev %}
-                    {% set _ = host_ranges.append(prefix ~ start) %}
-                {% else %}
-                    {% set _ = host_ranges.append(prefix ~ start ~ '-' ~ prev) %}
+                {% if nums|length > 0 %}
+                    {% if start_idx == nums|length - 1 %}
+                        {% set _ = host_ranges.append(prefix ~ nums[start_idx]) %}
+                    {% else %}
+                        {% set _ = host_ranges.append(prefix ~ nums[start_idx] ~ '-' ~ nums[nums|length - 1]) %}
+                    {% endif %}
                 {% endif %}
             {% endfor %}
             
