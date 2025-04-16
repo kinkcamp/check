@@ -8,9 +8,9 @@
         "memory_mb": 767,
         "processor_cores": 1,
         "processor_count": 12,
-        "uptime_seconds": 91590
+        "uptime_seconds": 821
     },
-    "date_collected": "2025-04-16T02:44:47Z",
+    "date_collected": "2025-04-16T03:08:15Z",
     "disk_usage": [
         "Filesystem             Size  Used Avail Use% Mounted on",
         "devtmpfs               365M     0  365M   0% /dev",
@@ -29,7 +29,7 @@
         "",
         "This system is not registered with an entitlement server. You can use subscription-manager to register.",
         "",
-        "Last metadata expiration check: 1:50:31 ago on Wed 16 Apr 2025 08:54:25 AM CST.",
+        "Last metadata expiration check: 2:13:58 ago on Wed 16 Apr 2025 08:54:25 AM CST.",
         "Available Environment Groups:",
         "   Server with GUI",
         "   Server",
@@ -70,8 +70,8 @@
     },
     "memory_usage": [
         "              total        used        free      shared  buff/cache   available",
-        "Mem:            767         316         135           6         315         325",
-        "Swap:          3183         421        2762"
+        "Mem:            767         318         142           5         307         325",
+        "Swap:          3183         397        2786"
     ],
     "network": {
         "default_gateway": [
@@ -121,6 +121,6 @@
         "selinux": "Enforcing"
     },
     "services_count": "7",
-    "system_load": "10:44:59 up 1 day,  1:26,  2 users,  load average: 0.78, 0.20, 0.06",
+    "system_load": "11:08:26 up 13 min,  2 users,  load average: 0.31, 0.11, 0.05",
     "users_count": "6"
 }
