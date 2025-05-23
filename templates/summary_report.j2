@@ -19,6 +19,21 @@
         .gateway-group { margin-bottom: 30px; }
         .host-group { display: none; }
         .toggle-icon { margin-right: 10px; }
+        .warning { background-color: #fff3cd; border: 1px solid #ffeeba; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .error { background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background-color: #d4edda; border: 1px solid #c3e6cb; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .status-indicator { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 5px; }
+        .status-active { background-color: #28a745; }
+        .status-inactive { background-color: #dc3545; }
+        .status-warning { background-color: #ffc107; }
+        .highlight { background-color: #fff3cd; }
+        .critical { background-color: #f8d7da; }
+        .note { background-color: #e2e3e5; padding: 5px; border-radius: 3px; font-size: 0.9em; }
+        .summary-stats { display: flex; justify-content: space-around; margin: 20px 0; }
+        .stat-box { text-align: center; padding: 15px; border-radius: 5px; min-width: 150px; }
+        .stat-box.warning { background-color: #fff3cd; }
+        .stat-box.error { background-color: #f8d7da; }
+        .stat-box.success { background-color: #d4edda; }
     </style>
     <script>
         function toggleGroup(gatewayId) {
@@ -38,6 +53,48 @@
     <h1>服务器信息汇总报告</h1>
     <p>生成时间: {{ ansible_date_time.iso8601 }}</p>
     <p>服务器总数: {{ all_servers_info | length }}</p>
+
+    <div class="summary-stats">
+        {% set inactive_firewall = 0 %}
+        {% set disabled_selinux = 0 %}
+        {% set no_ntp = 0 %}
+        {% set no_ipmi = 0 %}
+        
+        {% for server in all_servers_info %}
+            {% if server.services.firewalld == 'inactive' %}
+                {% set inactive_firewall = inactive_firewall + 1 %}
+            {% endif %}
+            {% if server.services.selinux == 'Disabled' %}
+                {% set disabled_selinux = disabled_selinux + 1 %}
+            {% endif %}
+            {% if server.ntp_servers and server.ntp_servers[0] == "未配置NTP服务器" %}
+                {% set no_ntp = no_ntp + 1 %}
+            {% endif %}
+            {% if not server.ipmi.installed %}
+                {% set no_ipmi = no_ipmi + 1 %}
+            {% endif %}
+        {% endfor %}
+
+        <div class="stat-box {% if inactive_firewall > 0 %}warning{% else %}success{% endif %}">
+            <h3>防火墙未启用</h3>
+            <p>{{ inactive_firewall }} 台服务器</p>
+        </div>
+        
+        <div class="stat-box {% if disabled_selinux > 0 %}warning{% else %}success{% endif %}">
+            <h3>SELinux已禁用</h3>
+            <p>{{ disabled_selinux }} 台服务器</p>
+        </div>
+        
+        <div class="stat-box {% if no_ntp > 0 %}warning{% else %}success{% endif %}">
+            <h3>未配置NTP</h3>
+            <p>{{ no_ntp }} 台服务器</p>
+        </div>
+        
+        <div class="stat-box {% if no_ipmi > 0 %}warning{% else %}success{% endif %}">
+            <h3>未安装IPMI</h3>
+            <p>{{ no_ipmi }} 台服务器</p>
+        </div>
+    </div>
 
     <h2>服务器列表（按网关分组）</h2>
     
@@ -111,27 +168,39 @@
                     <th>SELinux</th>
                     <th>Firewalld</th>
                     <th>NFS挂载</th>
-                    <th>NTP同步</th>  <!-- 新增列 -->
+                    <th>NTP同步</th>
                     <th>IPMI状态</th>
                     <th>详细报告</th>
                 </tr>
                 {% for server in servers %}
-                <tr>
+                <tr {% if server.services.firewalld == 'inactive' or server.services.selinux == 'Disabled' or (server.ntp_servers and server.ntp_servers[0] == "未配置NTP服务器") %}class="highlight"{% endif %}>
                     <td>{{ server.basic.hostname }}</td>
                     <td>{{ server.basic.distribution }}</td>
                     <td>{{ server.basic.kernel }}</td>
                     <td>{{ server.basic.processor_cores }}</td>
                     <td>{{ server.basic.memory_mb }}</td>
-                    <td>{{ server.services.selinux }}</td>
-                    <td>{{ server.services.firewalld }}</td>
+                    <td>
+                        <span class="status-indicator {% if server.services.selinux == 'Enforcing' %}status-active{% elif server.services.selinux == 'Disabled' %}status-inactive{% else %}status-warning{% endif %}"></span>
+                        {{ server.services.selinux }}
+                    </td>
+                    <td>
+                        <span class="status-indicator {% if server.services.firewalld == 'active' %}status-active{% else %}status-inactive{% endif %}"></span>
+                        {{ server.services.firewalld }}
+                    </td>
                     <td>{{ "有" if server.nfs_mounts and server.nfs_mounts|length > 0 and server.nfs_mounts[0] != "无NFS挂载点" else "无" }}</td>
-                    <td>{{ "已配置" if server.ntp_servers and server.ntp_servers|length > 0 and server.ntp_servers[0] != "未找到NTP配置" and server.ntp_servers[0] != "未找到NTP同步源" and server.ntp_servers[0] != "未配置NTP服务器" else "未配置" }}</td>  <!-- 新增单元格 -->
-                    <td>{{ "已安装" if server.ipmi.installed else "未安装" }}</td>
+                    <td>
+                        <span class="status-indicator {% if server.ntp_servers and server.ntp_servers|length > 0 and server.ntp_servers[0] != "未找到NTP配置" and server.ntp_servers[0] != "未找到NTP同步源" and server.ntp_servers[0] != "未配置NTP服务器" %}status-active{% else %}status-inactive{% endif %}"></span>
+                        {{ "已配置" if server.ntp_servers and server.ntp_servers|length > 0 and server.ntp_servers[0] != "未找到NTP配置" and server.ntp_servers[0] != "未找到NTP同步源" and server.ntp_servers[0] != "未配置NTP服务器" else "未配置" }}
+                    </td>
+                    <td>
+                        <span class="status-indicator {% if server.ipmi.installed %}status-active{% else %}status-inactive{% endif %}"></span>
+                        {{ "已安装" if server.ipmi.installed else "未安装" }}
+                    </td>
                     <td><a href="{{ server.basic.hostname }}_report.html" class="server-link">查看详情</a></td>
                 </tr>
                 {% endfor %}
                 <tr class="route-info">
-                    <td colspan="10">
+                    <td colspan="11">
                         <strong>组路由信息:</strong><br>
                         <div class="route-table">
                         {% for server in servers %}
